@@ -1,1 +1,8 @@
 # knights-travails
+This problem took a lot of trial and error, but I was able to figure it out. At first I tried implementing an undirected graph. I tried to create a graph containing all possible moves through recursion. However, this did not work because the recursive calls created the graph in a depth-first manner, resulting in long and winding paths from start to end rather than the shortest possible path. It also used an excessive amount of memory. I also realized that it would be difficult to traverse an undirected graph from the endpoint to the start to display the path. 
+
+Next, I tried implementing a directed graph which had edges as well as a previous_node property to link each space to the node before it. I realized it would be more efficient and simpler to create the graph in the knights_moves function only up to the endpoint rather than create a graph containing every possible move before the function was called. I was able to achieve this by creating each level of the graph while simultaneously searching the previous level, using a queue to keep track of where I was. I avoided duplicate nodes by having an array of nodes that had already been created. 
+
+Finally, I realized that since I have the queue to keep track of progress and I only need to traverse the graph from end to start, I could get rid of the edges. The resulted in a tree where each node is connected to its previous node and the root is connected to nothing. I called it a backwards tree, but I believe it is technically a directed graph that was created in reverse order. 
+
+Now there is a working function that accepts 2 spaces on a chess board, and returns the shortest path from one space to the other!
