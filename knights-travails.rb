@@ -1,29 +1,24 @@
 class Node
 
-    attr_reader :value, :adjacent_nodes
+    attr_accessor :value, :previous_node
     
-    def initialize(value)
+    def initialize(value, previous_node = nil)
         @value = value
-        @adjacent_nodes = []
-    end
-
-    def add_edge(adjacent_node)
-        @adjacent_nodes << adjacent_node
+        @previous_node = previous_node
     end
 end
-
-class Graph
+#I wasn't sure what to call this. Backwards_Tree seems right because the root is not connected to 
+#anything but each node thereafter is connected to its previous node. Although this would not be
+#very useful for storing data, it works perfectly for the problem at hand. 
+class Backwards_Tree
     attr_reader :nodes
     def initialize 
         @nodes = {}
     end
 
-    def add_node(value)
+    def add_node(value, previous_node = nil)
         @nodes[value] = Node.new(value)
-    end
-
-    def add_edge(value1, value2)
-        @nodes[value1].add_edge(@nodes[value2])
+        @nodes[value].previous_node = previous_node
     end
 end
 
@@ -49,13 +44,13 @@ class Board
 end
 
 class Knight
-    attr_accessor :possible_moves, :first_space
+    attr_accessor :space, :moves
     def initialize(space = [0,0])
-        @first_space = space
-        @possible_moves = find_possible_moves(space)
+        @space = space
+        @moves = get_moves(space)
     end
 
-    def find_possible_moves(space)
+    def get_moves(space)
         if space.is_a?(Array) == false
             return nil
         elsif space.length != 2
@@ -89,18 +84,46 @@ class Knight
     end
 end
 
-def knights_moves(space1)
-    knight = Knight.new(space1)
-    all_possible_moves = Graph.new
-    all_possible_moves.add_node(knight.first_space)
-    index = 0
-    p knight.possible_moves
-    knight.possible_moves.length.times do
-        all_possible_moves.add_node(knight.possible_moves[index])
-        all_possible_moves.add_edge(space1, knight.possible_moves[index])
-        index += 1
+def knights_moves(start, destination)
+    board = Board.new
+    if board.spaces.include?(start) == false || board.spaces.include?(destination) == false
+        return nil
     end
-    return all_possible_moves
+    knight = Knight.new(start)
+    possible_moves = Backwards_Tree.new
+    possible_moves.add_node(knight.space)
+    #the queue functions as a breadth-first search of the graph while it is being created
+    queue = [possible_moves.nodes[knight.space]]
+    #the already_created array ensures that no duplicate nodes will be created so excess memory is not used
+    #the queue cannot be used for this because the first values will be popped off as more are added
+    already_created = [possible_moves.nodes[knight.space].value]
+    #After checking if we have arrived at the destination, the knight is set to the space at the
+    #beginning of the queue. Then, all possible moves are added to the end of the queue as well as
+    #the already checked array. Finally, the first value in the queue is removed. 
+    while queue[0].value != destination
+        knight.space = queue[0].value
+        knight.moves = knight.get_moves(knight.space)
+        index = 0
+        knight.moves.length.times do
+            unless already_created.include?(knight.moves[index])
+                possible_moves.add_node(knight.moves[index], possible_moves.nodes[knight.space])
+                already_created.push(possible_moves.nodes[knight.moves[index]].value)
+                queue.push(possible_moves.nodes[knight.moves[index]])
+                index += 1
+            end
+        end
+        queue.shift
+    end
+    path = []
+    current_node = queue[0]
+    #The 'Backwards Tree' is traversed from the current space(destination) back to the starting point.
+    while current_node.previous_node != nil
+        path.unshift(current_node.value)
+        current_node = current_node.previous_node
+    end 
+    #the previous_node of the starting space is nil, so this adds the starting space to the path
+    path.unshift(current_node.value)
+    return path  
 end
 
-p knights_moves([3,3])
+p knights_moves([0,0], [7,7])
